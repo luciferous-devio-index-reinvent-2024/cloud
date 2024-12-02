@@ -1,0 +1,45 @@
+on:
+  push:
+    paths-ignore:
+      - "**/*.md"
+      - ".vscode/**"
+      - ".idea/**"
+      - ".gitignore"
+    branches:
+      - "*"
+    tags:
+      - "v*"
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  TF_VAR_SYSTEM_NAME: ${{ vars.SYSTEM_NAME }}
+  TF_VAR_REGION: ${{ vars.REGION }}
+  TF_VAR_LAYER_ARN_BASE: ${{ vars.LAYER_ARN_BASE }}
+  TF_VAR_SLACK_INCOMING_WEBHOOK_ERROR_NOTIFIER_01: ${{ secrets.SLACK_INCOMING_WEBHOOK_ERROR_NOTIFIER_01 }}
+
+jobs:
+  terraform:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.8
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.ROLE_ARN_GITHUB_ACTION }}
+          aws-region: ${{ vars.REGION }}
+      - run: terraform init
+      - name: terraform plan
+        run: terraform plan
+        if: ${{ github.ref_type == 'branch' }}
+      - name: terraform apply
+        run: terraform apply -auto-approve
+        if: ${{ github.ref_type == 'tag' }}
+      - name: terraform output
+        run: terraform output
+        if: ${{ github.ref_type == 'tag' }}
+
