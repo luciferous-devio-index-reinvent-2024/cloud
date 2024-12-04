@@ -114,15 +114,19 @@ def main(
     articles = get_articles(
         cached_data=cached_data, token_contentful=params.token_contentful
     )
-    for ar in articles:
-        insert_to_database(
-            article=ar,
-            notion_database_id=params.notion_database_id,
-            notion_token=params.notion_token,
+    try:
+        for ar in articles:
+            insert_to_database(
+                article=ar,
+                notion_database_id=params.notion_database_id,
+                notion_token=params.notion_token,
+            )
+            cached_data.articles.append(ar)
+            cached_data.list_inserted.append(ar.url)
+    finally:
+        save_cache(
+            cached_data=cached_data, bucket=env.bucket_name_data, client=client_s3
         )
-        cached_data.articles.append(ar)
-        cached_data.list_inserted.append(ar.url)
-    save_cache(cached_data=cached_data, bucket=env.bucket_name_data, client=client_s3)
 
 
 @logging_function(logger)
@@ -220,9 +224,7 @@ def resolve_thumbnail_url(*, item: dict) -> tuple[bool, str]:
 def convert_article(
     *, item: dict, cached_data: CachedData, token_contentful: str
 ) -> Article:
-    dt_utc = datetime.strptime(
-        item["sys"]["createdAt"], "%Y-%m-%dT%H:%M:%S.%f%z"
-    )
+    dt_utc = datetime.strptime(item["sys"]["createdAt"], "%Y-%m-%dT%H:%M:%S.%f%z")
     dt_jst = dt_utc.astimezone(jst)
 
     is_thumbnail_id, thumbnail_value = resolve_thumbnail_url(item=item)
@@ -257,13 +259,13 @@ def convert_article(
 @logging_function(logger)
 def get_articles(*, cached_data: CachedData, token_contentful: str) -> list[Article]:
     count = -1
-    length = 0
     limit = 100
     headers = {"Authorization": f"Bearer {token_contentful}"}
     result = []
+    union_inserted = set(cached_data.list_inserted)
     while True:
         count += 1
-        url = f"https://api.contentful.com/spaces/ct0aopd36mqt/environments/master/entries?fields.referenceCategory.en-US.sys.id=1DdS3IwWwqYx0N3Vwtn0e6&content_type=blogPost&limit={limit}&skip={limit * count}"
+        url = f"https://api.contentful.com/spaces/ct0aopd36mqt/environments/master/public/entries?fields.referenceCategory.en-US.sys.id=1DdS3IwWwqYx0N3Vwtn0e6&content_type=blogPost&limit={limit}&skip={limit * count}"
         req = Request(url=url, headers=headers)
         resp = client_contentful(req)
         binary = resp.read()
@@ -273,12 +275,10 @@ def get_articles(*, cached_data: CachedData, token_contentful: str) -> list[Arti
             article = convert_article(
                 item=item, cached_data=cached_data, token_contentful=token_contentful
             )
-            if article.url in cached_data.list_inserted:
-                return result
-            result.append(article)
-        length += len(all_items)
+            if article.url not in union_inserted:
+                result.append(article)
         total = data["total"]
-        if total == length:
+        if total < limit * (count + 1):
             return result
 
 
