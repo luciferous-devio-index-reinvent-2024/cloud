@@ -22,7 +22,7 @@ def logging_handler(logger: Logger, *, with_return: bool = False) -> Callable:
     def decorator(handler: Callable) -> Callable:
         @wraps(handler)
         @logger.inject_lambda_context()
-        def process(event, context, *args, **kwargs):
+        def wrapper_handler(event, context, *args, **kwargs):
             try:
                 logger.debug(
                     "event and environment variables",
@@ -54,6 +54,6 @@ def logging_handler(logger: Logger, *, with_return: bool = False) -> Callable:
                     data={"ErrorType": str(type(e)), "ErrorMessage": str(e)},
                 )
 
-        return process
+        return wrapper_handler
 
     return decorator

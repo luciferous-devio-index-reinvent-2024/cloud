@@ -15,7 +15,7 @@ def logging_function(
 ) -> Callable:
     def decorator(func: Callable) -> Callable:
         @wraps(func)
-        def process(*args, **kwargs):
+        def wrapper_function(*args, **kwargs):
             name_function = func.__name__
             id_call = str(uuid4())
             dt_start = datetime.now(tz=timezone.utc)
@@ -63,6 +63,6 @@ def logging_function(
                         data=data_end,
                     )
 
-        return process
+        return wrapper_function
 
     return decorator

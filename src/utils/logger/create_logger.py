@@ -7,7 +7,7 @@ from logging import DEBUG
 
 from aws_lambda_powertools import Logger
 from aws_lambda_powertools.utilities.data_classes.common import DictWrapper
-from aws_lambda_powertools.utilities.parser import BaseModel
+from pydantic import BaseModel
 
 
 def custom_default(obj):

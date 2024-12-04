@@ -1,3 +1,11 @@
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "5.54.1"
+    }
+  }
+}
 locals {
   iam = {
     effect = {
@@ -61,7 +69,7 @@ resource "aws_iam_policy" "event_bridge_put_events" {
 data "aws_iam_policy_document" "policy_event_bridge_invoke_api_destination" {
   policy_id = "policy_event_bridge_invoke_api_destination"
   statement {
-    sid       = "policy_event_bridge_invoke_api_destination"
+    sid       = "PolicyEventBridgeInvokeApiDestination"
     effect    = local.iam.effect.allow
     actions   = ["events:InvokeApiDestination"]
     resources = ["*"]
@@ -70,6 +78,24 @@ data "aws_iam_policy_document" "policy_event_bridge_invoke_api_destination" {
 
 resource "aws_iam_policy" "event_bridge_invoke_api_destination" {
   policy = data.aws_iam_policy_document.policy_event_bridge_invoke_api_destination.json
+}
+
+# ================================================================
+# Policy KMS Decrypt
+# ================================================================
+
+data "aws_iam_policy_document" "policy_kms_decrypt" {
+  policy_id = "policy_kms_decrypt"
+  statement {
+    sid       = "PolicyKmsDecrypt"
+    effect    = local.iam.effect.allow
+    actions   = ["kms:Decrypt"]
+    resources = ["*"]
+  }
+}
+
+resource "aws_iam_policy" "kms_decrypt" {
+  policy = data.aws_iam_policy_document.policy_kms_decrypt.json
 }
 
 # ================================================================
@@ -87,6 +113,25 @@ resource "aws_iam_role_policy_attachment" "lambda_error_processor" {
   }
   policy_arn = each.value
   role       = aws_iam_role.lambda_error_processor.name
+}
+
+# ================================================================
+# Role Lambda Cron Executor
+# ================================================================
+
+resource "aws_iam_role" "lambda_cron_executor" {
+  assume_role_policy = data.aws_iam_policy_document.assume_role_policy_lambda.json
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_cron_executor" {
+  for_each = {
+    a = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+    b = aws_iam_policy.kms_decrypt.arn
+    c = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+    d = "arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess"
+  }
+  policy_arn = each.value
+  role       = aws_iam_role.lambda_cron_executor.name
 }
 
 # ================================================================
