@@ -35,7 +35,7 @@ jobs:
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.ROLE_ARN_GITHUB_ACTION }}
-          aws-region: ${{ vars.REGION }}
+          aws-region: ${{ vars.AWS_REGION }}
       - run: |
           terraform init \
             -backend-config="bucket=$BACKEND_S3_BUCKET" \
