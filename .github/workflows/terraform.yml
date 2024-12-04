@@ -34,7 +34,7 @@ jobs:
           terraform_version: 1.10.0
       - uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.ROLE_ARN_GITHUB_ACTION }}
+          role-to-assume: ${{ secrets.ARN_IAM_ROLE }}
           aws-region: ${{ vars.AWS_REGION }}
       - run: |
           terraform init \
