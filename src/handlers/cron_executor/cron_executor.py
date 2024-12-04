@@ -198,7 +198,7 @@ def get_author(*, author_id: str, token_contentful: str) -> Author:
     resp = client_contentful(req)
     binary = resp.read()
     data = json.loads(binary)
-    item = data["items"]
+    item = data["items"][0]
     return Author(
         url="https://dev.classmethod.jp/author/{}/".format(
             item["fields"]["slug"]["en-US"]
