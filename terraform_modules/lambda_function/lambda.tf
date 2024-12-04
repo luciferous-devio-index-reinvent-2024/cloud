@@ -1,7 +1,7 @@
 module "function" {
   source = "../lambda_function_basic"
 
-  s3_bucket_deploy_package       = var.s3_key_deploy_package
+  s3_bucket_deploy_package       = var.s3_bucket_deploy_package
   s3_key_deploy_package          = var.s3_key_deploy_package
   source_code_hash               = var.source_code_hash
   identifier                     = var.identifier
