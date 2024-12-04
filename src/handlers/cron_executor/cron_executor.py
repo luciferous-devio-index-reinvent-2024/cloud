@@ -221,7 +221,7 @@ def convert_article(
     *, item: dict, cached_data: CachedData, token_contentful: str
 ) -> Article:
     dt_utc = datetime.strptime(
-        item["fields"]["firstPublishedAt"]["en-US"], "%Y-%m-%dT%H:%M:%S.%f%z"
+        item["sys"]["createdAt"], "%Y-%m-%dT%H:%M:%S.%f%z"
     )
     dt_jst = dt_utc.astimezone(jst)
 
