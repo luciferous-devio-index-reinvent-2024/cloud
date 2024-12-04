@@ -105,7 +105,10 @@ def main(
     # noinspection PyArgumentList
     env = EnvironmentVariables()
     params = get_ssm_parameters(
-        name_token_contentful=env.ssm_parameter_name_token_contentful, client=client_ssm
+        name_token_contentful=env.ssm_parameter_name_token_contentful,
+        name_notion_database_id=env.ssm_parameter_name_notion_database_id,
+        name_notion_token=env.ssm_parameter_name_notion_token,
+        client=client_ssm,
     )
     cached_data = load_cached_data(bucket=env.bucket_name_data, client=client_s3)
     articles = get_articles(

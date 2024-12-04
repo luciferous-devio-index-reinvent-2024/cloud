@@ -53,6 +53,7 @@ def logging_handler(logger: Logger, *, with_return: bool = False) -> Callable:
                     exc_info=True,
                     data={"ErrorType": str(type(e)), "ErrorMessage": str(e)},
                 )
+                raise
 
         return wrapper_handler
 
