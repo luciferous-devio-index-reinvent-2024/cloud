@@ -59,7 +59,7 @@ resource "aws_lambda_permission" "error_processor" {
 module "lambda_cron_executor" {
   source = "../lambda_function"
 
-  identifier  = "cron_executor"
+  identifier  = "inserter"
   handler     = "handlers/inserter/inserter.handler"
   role_arn    = aws_iam_role.lambda_inserter.arn
   layers      = [data.aws_ssm_parameter.layer_arn_base.value]
