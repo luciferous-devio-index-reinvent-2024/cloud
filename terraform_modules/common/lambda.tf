@@ -53,15 +53,15 @@ resource "aws_lambda_permission" "error_processor" {
 }
 
 # ================================================================
-# Lambda Cron Executor
+# Lambda Inserter
 # ================================================================
 
 module "lambda_cron_executor" {
   source = "../lambda_function"
 
   identifier  = "cron_executor"
-  handler     = "handlers/cron_executor/cron_executor.handler"
-  role_arn    = aws_iam_role.lambda_cron_executor.arn
+  handler     = "handlers/inserter/inserter.handler"
+  role_arn    = aws_iam_role.lambda_inserter.arn
   layers      = [data.aws_ssm_parameter.layer_arn_base.value]
   memory_size = 1024
   timeout     = 900

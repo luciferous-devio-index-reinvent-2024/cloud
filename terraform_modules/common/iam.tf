@@ -111,11 +111,11 @@ resource "aws_iam_role_policy_attachment" "lambda_error_processor" {
 # Role Lambda Cron Executor
 # ================================================================
 
-resource "aws_iam_role" "lambda_cron_executor" {
+resource "aws_iam_role" "lambda_inserter" {
   assume_role_policy = data.aws_iam_policy_document.assume_role_policy_lambda.json
 }
 
-resource "aws_iam_role_policy_attachment" "lambda_cron_executor" {
+resource "aws_iam_role_policy_attachment" "lambda_inserter" {
   for_each = {
     a = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
     b = aws_iam_policy.kms_decrypt.arn
@@ -123,7 +123,7 @@ resource "aws_iam_role_policy_attachment" "lambda_cron_executor" {
     d = "arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess"
   }
   policy_arn = each.value
-  role       = aws_iam_role.lambda_cron_executor.name
+  role       = aws_iam_role.lambda_inserter.name
 }
 
 # ================================================================
