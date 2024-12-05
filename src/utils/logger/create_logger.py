@@ -4,6 +4,7 @@ from datetime import datetime
 from decimal import Decimal
 from gzip import compress
 from logging import DEBUG
+from urllib.request import Request
 
 from aws_lambda_powertools import Logger
 from aws_lambda_powertools.utilities.data_classes.common import DictWrapper
@@ -27,6 +28,16 @@ def custom_default(obj):
         return obj.raw_event
     if isinstance(obj, BaseModel):
         return obj.model_dump()
+    if isinstance(obj, Request):
+        return {
+            "type": str(type(obj)),
+            "value": {
+                "url": obj.full_url,
+                "method": obj.method,
+                "headers": obj.headers,
+                "data": obj.data,
+            },
+        }
     if is_dataclass(obj):
         if isinstance(obj, type):
             return {"type": str(obj)}
