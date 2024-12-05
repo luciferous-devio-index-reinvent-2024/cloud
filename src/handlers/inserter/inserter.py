@@ -222,6 +222,7 @@ def insert_to_database(*, article: Article, notion_database_id: str, notion_toke
                         "rich_text": [{"text": {"content": article.author.name}}]
                     },
                     "AuthorUrl": {"url": article.author.url},
+                    "AuthorAvatar": {"url": article.author.avatar},
                     "PostId": {"number": 1},
                     "Thumbnail": {"url": article.thumbnail},
                 },
