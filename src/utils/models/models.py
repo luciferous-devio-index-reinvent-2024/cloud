@@ -31,7 +31,6 @@ class CachedData(BaseModel):
     articles: dict[str, Article]
     authors: dict[str, Author]
     thumbnails: dict[str, str]
-    list_inserted: list[str]
     list_published: list[str]
 
     @logging_function(logger)
@@ -40,7 +39,6 @@ class CachedData(BaseModel):
             articles=self.articles,
             authors={k: self.authors[k] for k in sorted(self.authors.keys())},
             thumbnails={k: self.thumbnails[k] for k in sorted(self.thumbnails.keys())},
-            list_inserted=sorted(self.list_inserted),
             list_published=sorted(self.list_published),
         )
         return data.model_dump_json()
@@ -72,6 +70,5 @@ class CachedData(BaseModel):
                 articles={},
                 authors={},
                 thumbnails={},
-                list_inserted=[],
                 list_published=[],
             )

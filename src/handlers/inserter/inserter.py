@@ -181,7 +181,6 @@ def get_articles(*, cached_data: CachedData, token_contentful: str) -> list[Arti
     limit = 100
     headers = {"Authorization": f"Bearer {token_contentful}"}
     result = []
-    union_inserted = set(cached_data.list_inserted)
     while True:
         count += 1
         url = f"https://api.contentful.com/spaces/ct0aopd36mqt/environments/master/public/entries?fields.referenceCategory.en-US.sys.id=1DdS3IwWwqYx0N3Vwtn0e6&content_type=blogPost&limit={limit}&skip={limit * count}"
@@ -194,7 +193,7 @@ def get_articles(*, cached_data: CachedData, token_contentful: str) -> list[Arti
             article = convert_article(
                 item=item, cached_data=cached_data, token_contentful=token_contentful
             )
-            if article.url not in union_inserted:
+            if article.url not in cached_data.articles:
                 result.append(article)
         total = data["total"]
         if total < limit * (count + 1):
