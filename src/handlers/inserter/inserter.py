@@ -62,7 +62,6 @@ def main(
                 notion_token=params.notion_token,
             )
             cached_data.articles[ar.url] = ar
-            cached_data.list_inserted.append(ar.url)
     finally:
         cached_data.save(bucket=env.bucket_name_data, client=client_s3)
 
