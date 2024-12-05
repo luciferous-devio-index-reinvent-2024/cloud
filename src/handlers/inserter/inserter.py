@@ -2,22 +2,19 @@ import json
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from functools import cache
-from gzip import compress, decompress
-from hashlib import sha256
 from urllib.request import Request
 
 from mypy_boto3_s3 import S3Client
 from mypy_boto3_ssm import SSMClient
-from pydantic import BaseModel
 from pydantic_settings import BaseSettings
 
 from utils.aws import create_client
 from utils.http import client_contentful, client_notion
 from utils.logger import create_logger, logging_function, logging_handler
+from utils.models import Article, Author, CachedData
 
 jst = timezone(offset=timedelta(hours=+9), name="JST")
 logger = create_logger(__name__)
-KEY_CACHED_DATA = "data/cached_data.json.gzip"
 
 
 class EnvironmentVariables(BaseSettings):
@@ -32,63 +29,6 @@ class SsmParameters:
     token_contentful: str
     notion_database_id: str
     notion_token: str
-
-
-class Author(BaseModel):
-    url: str
-    name: str
-    avatar: str
-
-
-class Article(BaseModel):
-    url: str
-    thumbnail: str
-    title: str
-    date: str
-    raw_date: str
-    author: Author
-
-
-class CachedData(BaseModel):
-    articles: list[Article]
-    authors: dict[str, Author]
-    thumbnails: dict[str, str]
-    list_inserted: list[str]
-    list_published: list[str]
-    hash_inserted: str
-    hash_published: str
-
-    @logging_function(logger)
-    def calc_hash_inserted(self) -> str:
-        array = sorted(self.list_inserted)
-        text = json.dumps(array)
-        return sha256(text.encode()).hexdigest()
-
-    @logging_function(logger)
-    def calc_hash_published(self) -> str:
-        array = sorted(self.list_published)
-        text = json.dumps(array)
-        return sha256(text.encode()).hexdigest()
-
-    @logging_function(logger)
-    def to_json(self) -> str:
-        data = CachedData(
-            articles=self.articles,
-            authors={k: self.authors[k] for k in sorted(self.authors.keys())},
-            thumbnails={k: self.thumbnails[k] for k in sorted(self.thumbnails.keys())},
-            list_inserted=sorted(self.list_inserted),
-            list_published=sorted(self.list_published),
-            hash_inserted="",
-            hash_published="",
-        )
-        data.hash_inserted = data.calc_hash_inserted()
-        data.hash_published = data.calc_hash_published()
-        return data.model_dump_json()
-
-    @logging_function(logger)
-    def to_compressed_binary(self) -> bytes:
-        text = self.to_json()
-        return compress(text.encode())
 
 
 @logging_handler(logger)
@@ -110,7 +50,7 @@ def main(
         name_notion_token=env.ssm_parameter_name_notion_token,
         client=client_ssm,
     )
-    cached_data = load_cached_data(bucket=env.bucket_name_data, client=client_s3)
+    cached_data = CachedData.load(bucket=env.bucket_name_data, client=client_s3)
     articles = get_articles(
         cached_data=cached_data, token_contentful=params.token_contentful
     )
@@ -121,12 +61,10 @@ def main(
                 notion_database_id=params.notion_database_id,
                 notion_token=params.notion_token,
             )
-            cached_data.articles.append(ar)
+            cached_data.articles[ar.url] = ar
             cached_data.list_inserted.append(ar.url)
     finally:
-        save_cache(
-            cached_data=cached_data, bucket=env.bucket_name_data, client=client_s3
-        )
+        cached_data.save(bucket=env.bucket_name_data, client=client_s3)
 
 
 @logging_function(logger)
@@ -164,25 +102,6 @@ def get_ssm_parameters(
         name_notion_token=name_notion_token,
         client=client,
     )
-
-
-@logging_function(logger)
-def load_cached_data(*, bucket: str, client: S3Client) -> CachedData:
-    try:
-        resp = client.get_object(Bucket=bucket, Key=KEY_CACHED_DATA)
-        binary = resp["Body"].read()
-        decompressed = decompress(binary)
-        return CachedData(**json.loads(decompressed))
-    except client.exceptions.NoSuchKey:
-        return CachedData(
-            articles=[],
-            authors={},
-            thumbnails={},
-            list_inserted=[],
-            list_published=[],
-            hash_inserted="",
-            hash_published="",
-        )
 
 
 @logging_function(logger)
@@ -312,13 +231,3 @@ def insert_to_database(*, article: Article, notion_database_id: str, notion_toke
         ).encode(),
     )
     client_notion(req)
-
-
-@logging_function(logger)
-def save_cache(*, cached_data: CachedData, bucket: str, client: S3Client):
-    client.put_object(
-        Bucket=bucket,
-        Key=KEY_CACHED_DATA,
-        Body=cached_data.to_compressed_binary(),
-        ContentType="application/gzip",
-    )
