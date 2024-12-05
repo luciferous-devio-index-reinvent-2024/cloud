@@ -63,7 +63,7 @@ module "lambda_cron_executor" {
   handler     = "handlers/inserter/inserter.handler"
   role_arn    = aws_iam_role.lambda_inserter.arn
   layers      = [data.aws_ssm_parameter.layer_arn_base.value]
-  memory_size = 1024
+  memory_size = 256
   timeout     = 900
 
   environment_variables = {
