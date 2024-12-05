@@ -56,7 +56,7 @@ resource "aws_lambda_permission" "error_processor" {
 # Lambda Inserter
 # ================================================================
 
-module "lambda_cron_executor" {
+module "lambda_inserter" {
   source = "../lambda_function"
 
   identifier  = "inserter"
