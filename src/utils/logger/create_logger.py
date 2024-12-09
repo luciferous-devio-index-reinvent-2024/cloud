@@ -31,12 +31,7 @@ def custom_default(obj):
     if isinstance(obj, Request):
         return {
             "type": str(type(obj)),
-            "value": {
-                "url": obj.full_url,
-                "method": obj.method,
-                "headers": obj.headers,
-                "data": obj.data,
-            },
+            "value": obj.__dict__,
         }
     if is_dataclass(obj):
         if isinstance(obj, type):
