@@ -38,8 +38,8 @@ module "slack_error_notifier_01" {
 # ================================================================
 
 resource "aws_cloudwatch_event_rule" "inserter" {
-  name_prefix = "inserter-"
-  state = var.enabled ? "ENABLED" : "DISABLED"
+  name_prefix         = "inserter-"
+  state               = var.enabled ? "ENABLED" : "DISABLED"
   schedule_expression = "cron(0 * * * ? *)"
 }
 

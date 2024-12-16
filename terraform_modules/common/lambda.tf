@@ -71,7 +71,7 @@ module "lambda_inserter" {
     SSM_PARAMETER_NAME_NOTION_DATABASE_ID = aws_ssm_parameter.notion_database_id.name
     SSM_PARAMETER_NAME_NOTION_TOKEN       = aws_ssm_parameter.notion_token.name
     BUCKET_NAME_DATA                      = var.s3_bucket_data
-    SNS_TOPIC_ARN = aws_sns_topic.notification_insert.arn
+    SNS_TOPIC_ARN                         = aws_sns_topic.notification_insert.arn
   }
 
   s3_bucket_deploy_package = aws_s3_object.lambda_deploy_package.bucket
@@ -87,7 +87,7 @@ module "lambda_inserter" {
 resource "aws_lambda_permission" "inserter" {
   action        = "lambda:InvokeFunction"
   function_name = module.lambda_inserter.function_name
-  qualifier = module.lambda_inserter.function_alias_arn
+  qualifier     = module.lambda_inserter.function_alias_arn
   principal     = "events.amazonaws.com"
-  source_arn = aws_cloudwatch_event_rule.inserter.arn
+  source_arn    = aws_cloudwatch_event_rule.inserter.arn
 }

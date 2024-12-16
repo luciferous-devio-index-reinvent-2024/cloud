@@ -44,6 +44,6 @@ variable "contentful_token" {
 }
 
 variable "enabled" {
-  type = bool
+  type     = bool
   nullable = false
 }

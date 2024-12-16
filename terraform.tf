@@ -44,6 +44,7 @@ module "common" {
   notion_database_id                = var.NOTION_DATABASE_ID
   notion_token                      = var.NOTION_TOKEN
   contentful_token                  = var.CONTENTFUL_TOKEN
+  enabled                           = true
 
   slack_incoming_webhook_error_notifier_01 = var.SLACK_INCOMING_WEBHOOK_ERROR_NOTIFIER_01
 }

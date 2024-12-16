@@ -1,5 +1,4 @@
 import json
-from mypy_boto3_sns import SNSClient
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from functools import cache
@@ -8,6 +7,7 @@ from urllib.error import HTTPError
 from urllib.request import Request
 
 from mypy_boto3_s3 import S3Client
+from mypy_boto3_sns import SNSClient
 from mypy_boto3_ssm import SSMClient
 from pydantic_settings import BaseSettings
 
@@ -45,7 +45,7 @@ def main(
     *,
     client_ssm: SSMClient = create_client("ssm"),
     client_s3: S3Client = create_client("s3"),
-    client_sns: SNSClient = create_client("sns")
+    client_sns: SNSClient = create_client("sns"),
 ):
     # noinspection PyArgumentList
     env = EnvironmentVariables()
