@@ -108,7 +108,7 @@ resource "aws_iam_role_policy_attachment" "lambda_error_processor" {
 }
 
 # ================================================================
-# Role Lambda Cron Executor
+# Role Lambda Inserter
 # ================================================================
 
 resource "aws_iam_role" "lambda_inserter" {
@@ -121,6 +121,7 @@ resource "aws_iam_role_policy_attachment" "lambda_inserter" {
     b = aws_iam_policy.kms_decrypt.arn
     c = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
     d = "arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess"
+    e = "arn:aws:iam::aws:policy/AmazonSNSFullAccess"
   }
   policy_arn = each.value
   role       = aws_iam_role.lambda_inserter.name
