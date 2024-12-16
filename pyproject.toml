@@ -16,7 +16,7 @@ aws-lambda-powertools = {version = "3.3.0", extras = ["all"]}
 
 [tool.poetry.group.base_layer.dependencies]
 boto3 = "1.35.7"
-boto3-stubs = {version = "1.35.7", extras = ["events", "s3", "ssm"]}
+boto3-stubs = {version = "1.35.7", extras = ["events", "s3", "ssm", "sns"]}
 aws-cloudwatch-logs-url = "1.0.3"
 
 [tool.poetry.group.dev.dependencies]

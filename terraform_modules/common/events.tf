@@ -32,3 +32,18 @@ module "slack_error_notifier_01" {
   iam_role_arn               = aws_iam_role.event_bridge_invoke_api_destination.arn
   connection_arn_slack_dummy = aws_cloudwatch_event_connection.slack_dummy.arn
 }
+
+# ================================================================
+# Rule Inserter
+# ================================================================
+
+resource "aws_cloudwatch_event_rule" "inserter" {
+  name_prefix = "inserter-"
+  state = var.enabled ? "ENABLED" : "DISABLED"
+  schedule_expression = "cron(0 * * * ? *)"
+}
+
+resource "aws_cloudwatch_event_target" "inserter" {
+  arn  = module.lambda_inserter.function_alias_arn
+  rule = aws_cloudwatch_event_rule.inserter.name
+}

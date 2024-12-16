@@ -1,7 +1,10 @@
 import json
+from mypy_boto3_sns import SNSClient
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from functools import cache
+from time import sleep
+from urllib.error import HTTPError
 from urllib.request import Request
 
 from mypy_boto3_s3 import S3Client
@@ -22,6 +25,7 @@ class EnvironmentVariables(BaseSettings):
     ssm_parameter_name_notion_database_id: str
     ssm_parameter_name_notion_token: str
     bucket_name_data: str
+    sns_topic_arn: str
 
 
 @dataclass(frozen=True)
@@ -41,6 +45,7 @@ def main(
     *,
     client_ssm: SSMClient = create_client("ssm"),
     client_s3: S3Client = create_client("s3"),
+    client_sns: SNSClient = create_client("sns")
 ):
     # noinspection PyArgumentList
     env = EnvironmentVariables()
@@ -64,6 +69,8 @@ def main(
             cached_data.articles[ar.url] = ar
     finally:
         cached_data.save(bucket=env.bucket_name_data, client=client_s3)
+    if len(articles) > 0:
+        notify(sns_topic_arn=env.sns_topic_arn, client=client_sns)
 
 
 @logging_function(logger)
@@ -176,15 +183,23 @@ def convert_article(
 
 @logging_function(logger)
 def get_articles(*, cached_data: CachedData, token_contentful: str) -> list[Article]:
-    count = -1
+    count = 0
     limit = 100
     headers = {"Authorization": f"Bearer {token_contentful}"}
     result = []
+    error_count = 0
     while True:
-        count += 1
         url = f"https://api.contentful.com/spaces/ct0aopd36mqt/environments/master/public/entries?fields.referenceCategory.en-US.sys.id=1DdS3IwWwqYx0N3Vwtn0e6&content_type=blogPost&limit={limit}&skip={limit * count}"
         req = Request(url=url, headers=headers)
-        resp = client_contentful(req)
+        try:
+            resp = client_contentful(req)
+        except HTTPError:
+            if error_count == 3:
+                raise
+            else:
+                error_count += 1
+                sleep(3)
+                continue
         binary = resp.read()
         data = json.loads(binary)
         all_items = data["items"]
@@ -197,6 +212,8 @@ def get_articles(*, cached_data: CachedData, token_contentful: str) -> list[Arti
         total = data["total"]
         if total < limit * (count + 1):
             return result
+        else:
+            count += 1
 
 
 @logging_function(logger)
@@ -230,3 +247,12 @@ def insert_to_database(*, article: Article, notion_database_id: str, notion_toke
         ).encode(),
     )
     client_notion(req)
+
+
+@logging_function(logger)
+def notify(*, sns_topic_arn: str, client: SNSClient):
+    client.publish(
+        TopicArn=sns_topic_arn,
+        Message="新しい記事がInsertされました",
+        Subject="Article Inserted",
+    )
