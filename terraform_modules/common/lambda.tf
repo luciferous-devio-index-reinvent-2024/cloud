@@ -87,7 +87,7 @@ module "lambda_inserter" {
 resource "aws_lambda_permission" "inserter" {
   action        = "lambda:InvokeFunction"
   function_name = module.lambda_inserter.function_name
-  qualifier     = module.lambda_inserter.function_alias_arn
+  qualifier     = module.lambda_inserter.function_alias_name
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.inserter.arn
 }
